@@ -560,7 +560,11 @@ const PAYS = [
 let selCat = 'food';
 let selPay = 'cash';
 let viewMonth = new Date();
-let data = JSON.parse(localStorage.getItem('kakeibo_v3') || '{}');
+let data = (() => { try { return JSON.parse(localStorage.getItem('kakeibo_v3') || '{}'); } catch { return {}; } })();
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 function todayKey() {
   return toKey(new Date());
@@ -662,7 +666,7 @@ function renderToday() {
       return `
         <div class="entry-item">
           <div class="entry-info">
-            <div class="entry-memo">${e.memo}</div>
+            <div class="entry-memo">${esc(e.memo)}</div>
             <div class="entry-sub">${e.time} · ${cat.label} · ${pay.label}</div>
           </div>
           <div class="entry-right">
@@ -789,14 +793,19 @@ function switchTab(tab) {
   if (tab==='monthly') renderMonthly();
 }
 
+let _toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2000);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>t.classList.remove('show'), 2000);
 }
 
-document.addEventListener('keydown', e => { if(e.key==='Enter') addEntry(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('tab-today').classList.contains('hidden'))
+    addEntry();
+});
 
 initDateInput();
 renderCats();
