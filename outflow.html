@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>outflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --text: #1a1a1a;
+    --muted: #9a9a9a;
+    --faint: #e8e6e1;
+    --line: #d8d6d1;
+    --red: #c0392b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100dvh;
+    padding-bottom: 60px;
+  }
+
+  .header {
+    padding: 48px 28px 28px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+  }
+
+  .app-name {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    text-transform: lowercase;
+  }
+
+  .app-name span { color: var(--muted); font-size: 11px; }
+
+  .today-date {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+  }
+
+  .total-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .total-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 48px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .total-amount .yen { font-size: 18px; color: var(--muted); margin-right: 4px; }
+  .total-amount .unit { font-size: 14px; color: var(--muted); margin-left: 3px; }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 14px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative;
+    transition: color 0.2s;
+  }
+
+  .tab.active { color: var(--text); }
+
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 15%;
+    width: 70%;
+    height: 1px;
+    background: var(--text);
+  }
+
+  .input-section { padding: 24px 28px 0; }
+
+  .date-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    gap: 10px;
+  }
+
+  .date-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+
+  input[type="date"] {
+    flex: 1;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    text-align: right;
+  }
+
+  .today-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    background: none;
+  }
+
+  .today-badge:active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .amount-row {
+    display: flex;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+
+  .yen-prefix {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-right: 8px;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    width: 100%;
+  }
+
+  input[type="number"]::placeholder { color: var(--faint); }
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+
+  .memo-row {
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text);
+    outline: none;
+  }
+
+  input[type="text"]::placeholder { color: var(--muted); font-size: 13px; }
+
+  .group-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .sel-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .sel-btn.active {
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg);
+  }
+
+  .add-btn {
+    width: 100%;
+    background: var(--text);
+    border: none;
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .add-btn:active { opacity: 0.7; }
+
+  .section-head {
+    padding: 28px 28px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .entries { padding: 0; }
+
+  .date-group-head {
+    padding: 14px 28px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    background: var(--bg);
+    border-bottom: 1px solid var(--faint);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .date-group-total { font-size: 12px; color: var(--text); }
+
+  .entry-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--faint);
+    animation: fadeIn 0.2s ease;
+    gap: 14px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .entry-info { flex: 1; min-width: 0; }
+
+  .entry-memo {
+    font-size: 14px;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .entry-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+
+  .entry-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .entry-amount { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 300; }
+  .entry-pay { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
+
+  .entry-del {
+    background: none;
+    border: none;
+    color: var(--faint);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .entry-del:active { color: var(--red); }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--faint);
+  }
+
+  .history-date { font-family: 'DM Mono', monospace; font-size: 12px; }
+  .history-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .history-amt { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 300; }
+
+  .month-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 28px 0;
+  }
+
+  .month-nav-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .month-nav-btn:active { background: var(--text); color: var(--bg); }
+  .month-title { font-family: 'DM Mono', monospace; font-size: 14px; letter-spacing: 0.15em; }
+
+  .month-summary {
+    margin: 20px 28px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+  }
+
+  .summary-total {
+    font-family: 'DM Mono', monospace;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .summary-total .s-yen { font-size: 14px; color: var(--muted); margin-right: 3px; }
+  .summary-total .s-unit { font-size: 12px; color: var(--muted); margin-left: 2px; }
+  .summary-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+
+  .breakdown-section { padding: 0 28px; }
+
+  .breakdown-head {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 20px 0 12px;
+    border-bottom: 1px solid var(--faint);
+  }
+
+  .breakdown-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--faint);
+    gap: 12px;
+  }
+
+  .bd-label-col { width: 72px; flex-shrink: 0; }
+
+  .bd-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .bd-info { flex: 1; min-width: 0; }
+  .bd-bar-wrap { height: 2px; background: var(--faint); width: 100%; }
+  .bd-bar { height: 2px; background: var(--text); transition: width 0.4s ease; }
+  .bd-right { text-align: right; flex-shrink: 0; }
+  .bd-amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 300; }
+  .bd-pct { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .pay-breakdown { padding: 0 28px; }
+
+  .pay-bd-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--faint);
+  }
+
+  .pay-bd-left { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pay-bd-right { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 300; }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--text);
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 10px 24px;
+    opacity: 0;
+    transition: all 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 300;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-meta">
+    <span class="app-name">outflow<span> ·</span></span>
+    <span class="today-date" id="todayDate"></span>
+  </div>
+  <div class="total-label">Today's Spending</div>
+  <div class="total-amount">
+    <span class="yen">¥</span><span id="totalNum">0</span><span class="unit">円</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('today')">Today</button>
+  <button class="tab" onclick="switchTab('history')">History</button>
+  <button class="tab" onclick="switchTab('monthly')">Monthly</button>
+</div>
+
+<div id="tab-today">
+  <div class="input-section">
+    <div class="date-row">
+      <span class="date-label">date</span>
+      <input type="date" id="dateInput">
+      <button class="today-badge" onclick="resetToToday()">today</button>
+    </div>
+    <div class="amount-row">
+      <span class="yen-prefix">¥</span>
+      <input type="number" id="amountInput" placeholder="0" inputmode="numeric">
+    </div>
+    <div class="memo-row">
+      <input type="text" id="memoInput" placeholder="note" maxlength="30">
+    </div>
+    <div class="group-label">Category</div>
+    <div class="btn-row" id="catRow"></div>
+    <div class="group-label">Payment</div>
+    <div class="btn-row" id="payRow"></div>
+    <button class="add-btn" onclick="addEntry()">Add Entry</button>
+  </div>
+  <div class="section-head">Entries</div>
+  <div class="entries" id="todayList"></div>
+</div>
+
+<div id="tab-history" class="hidden">
+  <div class="section-head">History</div>
+  <div class="entries" id="historyList"></div>
+</div>
+
+<div id="tab-monthly" class="hidden">
+  <div class="month-nav">
+    <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-title" id="monthTitle"></div>
+    <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div id="monthContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = [
+  { id:'food',  label:'Food'     },
+  { id:'drink', label:'Drinks'   },
+  { id:'conv',  label:'Konbini'  },
+  { id:'trans', label:'Transit'  },
+  { id:'daily', label:'Daily'    },
+  { id:'other', label:'Other'    },
+];
+
+const PAYS = [
+  { id:'cash',   label:'Cash'    },
+  { id:'credit', label:'Card'    },
+  { id:'ic',     label:'IC'      },
+  { id:'qr',     label:'QR'      },
+  { id:'point',  label:'Points'  },
+];
+
+let selCat = 'food';
+let selPay = 'cash';
+let viewMonth = new Date();
+let data = JSON.parse(localStorage.getItem('kakeibo_v3') || '{}');
+
+function todayKey() {
+  return toKey(new Date());
+}
+
+function toKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function monthPrefix(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function fmtDate(key) {
+  const [,m,d] = key.split('-');
+  const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(key+'T00:00:00').getDay()];
+  return `${m}.${d}  ${dow}`;
+}
+
+function isToday(key) { return key === todayKey(); }
+function save() { localStorage.setItem('kakeibo_v3', JSON.stringify(data)); }
+
+function initDateInput() {
+  document.getElementById('dateInput').value = todayKey();
+}
+
+function resetToToday() {
+  document.getElementById('dateInput').value = todayKey();
+}
+
+function getSelectedKey() {
+  return document.getElementById('dateInput').value || todayKey();
+}
+
+function updateHeader() {
+  const d = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('todayDate').textContent =
+    `${d.getMonth()+1}.${String(d.getDate()).padStart(2,'0')}  ${days[d.getDay()]}`;
+  const total = (data[todayKey()]||[]).reduce((s,e)=>s+e.amount,0);
+  document.getElementById('totalNum').textContent = total.toLocaleString();
+}
+
+function renderCats() {
+  document.getElementById('catRow').innerHTML = CATS.map(c =>
+    `<button class="sel-btn ${c.id===selCat?'active':''}" onclick="selCat='${c.id}';renderCats()">${c.label}</button>`
+  ).join('');
+}
+
+function renderPays() {
+  document.getElementById('payRow').innerHTML = PAYS.map(p =>
+    `<button class="sel-btn ${p.id===selPay?'active':''}" onclick="selPay='${p.id}';renderPays()">${p.label}</button>`
+  ).join('');
+}
+
+function addEntry() {
+  const amt = parseInt(document.getElementById('amountInput').value);
+  const memo = document.getElementById('memoInput').value.trim();
+  if (!amt || amt <= 0) { showToast('enter amount'); return; }
+
+  const key = getSelectedKey();
+  if (!data[key]) data[key] = [];
+  const cat = CATS.find(c=>c.id===selCat);
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  data[key].unshift({ id: Date.now(), amount: amt, memo: memo||cat.label, cat: selCat, pay: selPay, time });
+  save();
+  document.getElementById('amountInput').value = '';
+  document.getElementById('memoInput').value = '';
+  renderToday();
+
+  const label = isToday(key) ? 'today' : fmtDate(key).trim();
+  showToast(`¥${amt.toLocaleString()}  ${label}`);
+}
+
+function deleteEntry(key, id) {
+  data[key] = data[key].filter(e=>e.id!==id);
+  if (!data[key].length) delete data[key];
+  save();
+  renderToday();
+}
+
+function renderToday() {
+  updateHeader();
+  const keys = Object.keys(data).sort().reverse();
+  const list = document.getElementById('todayList');
+
+  if (!keys.length) { list.innerHTML = '<div class="empty">no entries yet</div>'; return; }
+
+  list.innerHTML = keys.map(k => {
+    const entries = data[k];
+    const dayTotal = entries.reduce((s,e)=>s+e.amount,0);
+    const label = isToday(k) ? 'Today' : fmtDate(k);
+
+    const rows = entries.map(e => {
+      const cat = CATS.find(c=>c.id===e.cat)||CATS[5];
+      const pay = PAYS.find(p=>p.id===e.pay)||PAYS[0];
+      return `
+        <div class="entry-item">
+          <div class="entry-info">
+            <div class="entry-memo">${e.memo}</div>
+            <div class="entry-sub">${e.time} · ${cat.label} · ${pay.label}</div>
+          </div>
+          <div class="entry-right">
+            <div class="entry-amount">¥${e.amount.toLocaleString()}</div>
+          </div>
+          <button class="entry-del" onclick="deleteEntry('${k}',${e.id})">×</button>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="date-group-head">
+        <span>${label}</span>
+        <span class="date-group-total">¥${dayTotal.toLocaleString()}</span>
+      </div>
+      ${rows}`;
+  }).join('');
+}
+
+function renderHistory() {
+  const keys = Object.keys(data).sort().reverse();
+  const list = document.getElementById('historyList');
+  if (!keys.length) { list.innerHTML = '<div class="empty">no history</div>'; return; }
+  list.innerHTML = keys.map(k => {
+    const total = data[k].reduce((s,e)=>s+e.amount,0);
+    return `
+      <div class="history-item">
+        <div>
+          <div class="history-date">${isToday(k)?'Today  ':''}${fmtDate(k)}</div>
+          <div class="history-sub">${data[k].length} entries</div>
+        </div>
+        <div class="history-amt">¥${total.toLocaleString()}</div>
+      </div>`;
+  }).join('');
+}
+
+function changeMonth(delta) {
+  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + delta, 1);
+  renderMonthly();
+}
+
+function renderMonthly() {
+  const prefix = monthPrefix(viewMonth);
+  const y = viewMonth.getFullYear();
+  const m = viewMonth.getMonth() + 1;
+
+  document.getElementById('monthTitle').textContent =
+    `${y}  /  ${String(m).padStart(2,'0')}`;
+
+  const keys = Object.keys(data).filter(k => k.startsWith(prefix));
+  const allEntries = keys.flatMap(k => data[k]);
+  const totalAmt = allEntries.reduce((s,e)=>s+e.amount,0);
+  const dayCount = keys.length;
+  const content = document.getElementById('monthContent');
+
+  if (!allEntries.length) { content.innerHTML = '<div class="empty">no data this month</div>'; return; }
+
+  const catTotals = {};
+  CATS.forEach(c => { catTotals[c.id] = 0; });
+  allEntries.forEach(e => { catTotals[e.cat] = (catTotals[e.cat]||0) + e.amount; });
+  const maxCat = Math.max(...Object.values(catTotals));
+
+  const payTotals = {};
+  PAYS.forEach(p => { payTotals[p.id] = 0; });
+  allEntries.forEach(e => { payTotals[e.pay] = (payTotals[e.pay]||0) + e.amount; });
+
+  const catRows = CATS
+    .filter(c => catTotals[c.id] > 0)
+    .sort((a,b) => catTotals[b.id]-catTotals[a.id])
+    .map(c => {
+      const amt = catTotals[c.id];
+      const pct = totalAmt ? Math.round(amt/totalAmt*100) : 0;
+      const barW = maxCat ? Math.round(amt/maxCat*100) : 0;
+      return `
+        <div class="breakdown-item">
+          <div class="bd-label-col"><div class="bd-label">${c.label}</div></div>
+          <div class="bd-info">
+            <div class="bd-bar-wrap"><div class="bd-bar" style="width:${barW}%"></div></div>
+          </div>
+          <div class="bd-right">
+            <div class="bd-amount">¥${amt.toLocaleString()}</div>
+            <div class="bd-pct">${pct}%</div>
+          </div>
+        </div>`;
+    }).join('');
+
+  const payRows = PAYS
+    .filter(p => payTotals[p.id] > 0)
+    .sort((a,b) => payTotals[b.id]-payTotals[a.id])
+    .map(p => {
+      const amt = payTotals[p.id];
+      const pct = totalAmt ? Math.round(amt/totalAmt*100) : 0;
+      return `
+        <div class="pay-bd-item">
+          <div class="pay-bd-left">${p.label}</div>
+          <div class="pay-bd-right">¥${amt.toLocaleString()} <span style="color:var(--muted);font-size:10px">${pct}%</span></div>
+        </div>`;
+    }).join('');
+
+  content.innerHTML = `
+    <div class="month-summary">
+      <div class="summary-total">
+        <span class="s-yen">¥</span>${totalAmt.toLocaleString()}<span class="s-unit">円</span>
+      </div>
+      <div class="summary-meta">${dayCount} days · ${allEntries.length} entries · avg ¥${dayCount?Math.round(totalAmt/dayCount).toLocaleString():0}/day</div>
+    </div>
+    <div class="breakdown-section">
+      <div class="breakdown-head">Category</div>
+      ${catRows}
+    </div>
+    <div class="pay-breakdown">
+      <div class="breakdown-head" style="padding-top:20px">Payment</div>
+      ${payRows}
+    </div>`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['today','history','monthly'][i]===tab);
+  });
+  ['today','history','monthly'].forEach(id => {
+    document.getElementById(`tab-${id}`).classList.toggle('hidden', id!==tab);
+  });
+  if (tab==='history') renderHistory();
+  if (tab==='monthly') renderMonthly();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Enter') addEntry(); });
+
+initDateInput();
+renderCats();
+renderPays();
+renderToday();
+</script>
+</body>
+</html>
