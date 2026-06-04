@@ -479,6 +479,21 @@
 
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .hidden { display: none; }
+
+  .data-actions { display: flex; gap: 16px; margin-top: 12px; }
+  .data-btn {
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    text-transform: lowercase;
+    transition: color 0.15s;
+  }
+  .data-btn:active { color: var(--text); }
 </style>
 </head>
 <body>
@@ -491,6 +506,11 @@
   <div class="total-label">Today's Spending</div>
   <div class="total-amount">
     <span class="yen">¥</span><span id="totalNum">0</span><span class="unit">円</span>
+  </div>
+  <div class="data-actions">
+    <button class="data-btn" onclick="exportData()">↓ export</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    <button class="data-btn" onclick="document.getElementById('importFile').click()">↑ import</button>
   </div>
 </div>
 
@@ -801,6 +821,38 @@ function showToast(msg) {
   t.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+function exportData() {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `outflow-${toKey(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('exported');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (typeof imported !== 'object' || Array.isArray(imported)) throw new Error();
+      data = imported;
+      save();
+      renderToday();
+      showToast('imported');
+    } catch {
+      showToast('invalid file');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 document.addEventListener('keydown', e => {
